@@ -2,7 +2,7 @@ import pymysql
 import pymysql.cursors
 
 _db = pymysql.connect(
-    host = 'woSIN.mysql.pythonanywhere-service.com',
+    host = 'woSIN.mysql.pythonanywhere-services.com',
     port = 3306,
     user = 'woSIN',
     password = '!10JwsJws10',
