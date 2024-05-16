@@ -6,51 +6,32 @@ from datetime import timedelta
 
 ## static폴더 안의 python 안의 (querys.py 혹은 querys 폴더 안의 __init__.py) 로드
 from static.python import querys
+## 환경변수 dotenv를 로드
+from dotenv import load_dotenv
+import os
+## database.py 안의 MyDB class 로드
+from static.python.database import MyDB
+
+## .env 파일을 로드
+load_dotenv()
 
 ## Flask라는 Class 생성
 app = Flask(__name__)
 
 ## secret_key 설정 (session 데이터 암호화 키)
-app.secret_key = 'ABC'
+app.secret_key = os.getenv('secret_key')
 
 ## session의 지속시간을 설정
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=5)
 
-## 세션 데이터 초기화
-# session = {}
-
-## DB흐름 5개 connect, query, execute, fetchall/commit, close 
-# 이걸 계속 써줄거니까 함수화. 매번 바뀌는 query는 매개변수
-
-# 함수 생성
-# DB server와 연결하고 -> 가상공산 Cursor 생성 -> 매개변수 query문, data값을 이용하여 질의를 보내고 
-# -> 결과값을 받아오거나 DB서버에 동기화 -> DB server 연결 종료
-def db_execute(query, *data):
-    # DB와 연결
-    _db = pymysql.connect(
-        host = 'localhost',
-        port = 3306,
-        user = 'root',
-        password = '1234',
-        database = 'ubion'
-    ) 
-    # 가상공간 Cursor 생성
-    cursor = _db.cursor(pymysql.cursors.DictCursor)
-    # 매개변수 query와 data를 이용하여 질의
-    cursor.execute(query, data)
-    # query가 select라면 결과값을 변수(result)에 저장
-    if query.lower().strip().startswith('select'):
-        result = cursor.fetchall()
-    # query가 select가 아니라면 DB서버와 동기화 후 변수(result)는 "Query Ok" 문자를 대입
-    else:
-        _db.commit()
-        result = "Query Ok"
-    # DB 서버와의 연결을 종료
-    _db.close()
-    # 결과(result)를 되돌려준다.
-    return result
-    
-
+## MyDB class 생성
+mydb = MyDB(
+    os.getenv('host'),
+    int(os.getenv('port')),
+    os.getenv('user'),
+    os.getenv('password'),
+    os.getenv('db_name')
+)
 
 
 ## 메인페이지 api 생성
@@ -82,7 +63,7 @@ def main():
     print(f"/main[post] -> 유저 아이디 : {_id}, 비밀번호 : {_pass}")
    
     # 함수 호출
-    db_result = db_execute(querys.login_query, _id, _pass)
+    db_result = mydb.db_execute(querys.login_query, _id, _pass)
     # 로그인 성공 여부(조건식 : db_result가 존재하는가?)
     if db_result:
         # 로그인 성공 -> main.html을 되돌려준다.
@@ -121,7 +102,7 @@ def check_id():
     print(f"/check_id[post] -> 유저 아이디 : {_id}")
     # 유저가 보낸 id값이 사용이 가능한가?
    
-    db_result = db_execute(querys.check_id_query, _id)
+    db_result = mydb.db_execute(querys.check_id_query, _id)
     # id가 사용가능한 경우 : db_result 존재하지 않을 때
     if db_result:
         result = '0'
@@ -140,7 +121,7 @@ def signup2():
  
     # 함수 호출(에러가 발생하는 경우가 있으니 try 생성)
     try:
-        db_result = db_execute(querys.signup_query, _id, _pass, _name)
+        db_result = mydb.db_execute(querys.signup_query, _id, _pass, _name)
         print(db_result)    
     except:
         db_result = 3
