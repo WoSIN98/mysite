@@ -15,7 +15,7 @@ cursor = _db.cursor(pymysql.cursors.DictCursor)
 ## table 생성 쿼리문 
 create_user = """
     create table 
-    if exists    
+    if not exists    
     user(
     id varchar(32) primary key,
     password varchar(64) not null,
